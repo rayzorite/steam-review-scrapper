@@ -27,6 +27,13 @@ Ensure the following dependencies are installed:
 
 #### Note: if you are on Arch Linux, pip won't install libraries on your main system, you need to be in Python Virtual Environment (venv)
 
+    python -m venv scrapper-env
+    source scrapper-env/bin/activate
+
+and to leave the environment:
+
+    deactivate
+
 ### Usage
 - run `python scrapper.py`
 - Enter Game App ID.
