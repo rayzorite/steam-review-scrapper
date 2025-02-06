@@ -86,10 +86,9 @@ Ensure the following dependencies are installed:
 - Scrapes English-language reviews only. (you can change it in the script)
 
 ### Future Improvements
-- Headless Selenium mode.
 - Advanced NLP for sentiment classification.
 - GUI interface.
-- dditional data sources (Metacritic, Reddit).
+- Additional data sources (Metacritic, Reddit).
 
 ---
 
