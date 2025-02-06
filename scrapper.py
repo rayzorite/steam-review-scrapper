@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
 
 # For interactive prompts using arrow keys
@@ -58,17 +59,23 @@ URL_TEMPLATE = "https://steamcommunity.com/app/{}/reviews/?p=1&browsefilter=most
 url = URL_TEMPLATE.format(GAME_ID)
 console.print(Panel(f"[bold cyan]Scraping URL:[/] {url}", title="Steam Review Scraper"))
 
-# Initialize Selenium webdriver (Firefox)
-console.print("[bold green]Initializing browser...[/]")
-browser = webdriver.Firefox()
+# Configure headless mode
+options = Options()
+options.add_argument("--headless")  # Enable headless mode
+
+# Initialize Selenium WebDriver with headless option
+console.print("[bold green]Initializing headless browser...[/]")
+browser = webdriver.Firefox(options=options)
 browser.get(url)
 
 # Download necessary NLTK resources
 console.print("[bold yellow]Downloading NLTK resources...[/]")
 nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('vader_lexicon', quiet=True)
 nltk.download('opinion_lexicon', quiet=True)
