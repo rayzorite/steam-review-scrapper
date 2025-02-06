@@ -84,7 +84,7 @@ Ensure the following dependencies are installed:
 - Requires your current Browser's WebDriver. (just use firefox its pain to explain)
 - Scrapes English-language reviews only. (you can change it in the script)
 
-### NEW ADDITION:
+### New Addition:
 - Headless Selenium (New Browser isntance won't open, it's all in the backened now)
 
 ### Future Improvements
