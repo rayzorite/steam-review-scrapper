@@ -39,7 +39,24 @@ except ValueError:
     console.print("[bold red]Invalid App ID. Please enter a numeric App ID.[/]")
     exit(1)
 
-# Using a dropdown (arrow key navigation) for the scraping mode
+# ---------------------------
+# Fetch Game Name based on App ID
+# ---------------------------
+def get_game_name(game_id):
+    """Fetch game name from the Steam Community page using App ID."""
+    game_url = f"https://store.steampowered.com/app/{game_id}/"
+    browser.get(game_url)
+
+    try:
+        game_name = browser.find_element(By.XPATH, '//div[@class="apphub_AppName"]').text
+        return game_name
+    except NoSuchElementException:
+        console.print("[bold red]Could not retrieve the game name. Make sure the App ID is valid.[/]")
+        exit(1)
+
+# ---------------------------
+# Scraping Mode, Review Count
+# ---------------------------
 scrape_mode = questionary.select(
     "Choose scraping mode:",
     choices=["balanced", "random"]
@@ -55,17 +72,21 @@ except ValueError:
 # ---------------------------
 # Configuration and Setup
 # ---------------------------
+# Initialize browser in headless mode
+options = Options()
+options.add_argument("--headless")
+browser = webdriver.Firefox(options=options)
+
+# Fetch the game name
+game_name = get_game_name(GAME_ID)
+
 URL_TEMPLATE = "https://steamcommunity.com/app/{}/reviews/?p=1&browsefilter=mostrecent&filterLanguage=english"
 url = URL_TEMPLATE.format(GAME_ID)
-console.print(Panel(f"[bold cyan]Scraping URL:[/] {url}", title="Steam Review Scraper"))
+console.print(Panel(f"[bold cyan]URL:[/] {url}\n[bold cyan]Game: {game_name}[/]", title="Game Information"))
 
-# Configure headless mode
-options = Options()
-options.add_argument("--headless")  # Enable headless mode
-
-# Initialize Selenium WebDriver with headless option
-console.print("[bold green]Initializing headless browser...[/]")
-browser = webdriver.Firefox(options=options)
+# ---------------------------
+# Initialize WebDriver
+# ---------------------------
 browser.get(url)
 
 # Download necessary NLTK resources
@@ -104,10 +125,8 @@ def get_steam_id(card):
     return steam_id
 
 def scrape_review_data(card):
-    """
-    Extract review information from a review card and return:
-    review text, recommendation text, review length, play hours, and date posted.
-    """
+    """Extract review information from a review card and return:
+    review text, recommendation text, review length, play hours, and date posted."""
     date_posted_element = card.find_element(By.XPATH, './/div[@class="apphub_CardTextContent"]/div[@class="date_posted"]')
     date_posted = date_posted_element.text.strip()
 
@@ -157,6 +176,11 @@ os.makedirs(output_folder, exist_ok=True)
 console.print(Panel(f"[bold green]Output folder created (if not exists):[/] {output_folder}", title="Folder Setup"))
 
 # ---------------------------
+# Time Tracking for Scraping Process
+# ---------------------------
+start_time = time.time()  # Record the start time
+
+# ---------------------------
 # Scraping Reviews
 # ---------------------------
 if scrape_mode == 'balanced':
@@ -164,7 +188,6 @@ if scrape_mode == 'balanced':
     negative_reviews = []
     seen_steam_ids = set()
 
-    # In balanced mode, the target is the number per category.
     target_per_category = total_reviews_to_scrape
     max_scroll_attempts = 4
     scroll_attempt = 0
@@ -215,13 +238,14 @@ if scrape_mode == 'balanced':
             time.sleep(2)
 
         total_scraped = len(positive_reviews) + len(negative_reviews)
-        console.print(Panel(f"[bold green]Total reviews scraped:[/] {total_scraped} (Positive: {len(positive_reviews)}, Negative: {len(negative_reviews)})", title="Scraping Results"))
+        end_time = time.time()  # Record the end time
+        elapsed_time = end_time - start_time  # Calculate the time taken
+        console.print(Panel(f"[bold green]Total reviews scraped:[/] {total_scraped} (Positive: {len(positive_reviews)}, Negative: {len(negative_reviews)})\n[bold green]Scraping completed in:[/] {elapsed_time:.2f}s", title="Scraping Results"))
 
     except Exception as e:
-        console.print(Panel(f"[bold red]Error during scraping: {e}[/]", title="Error"))
-    finally:
+        console.print(Panel(f"[bold red]Error occurred: {e}", title="Error"))
         browser.quit()
-        console.print("[bold yellow]Browser closed.[/]")
+        exit(1)
 
     # Combine positive and negative reviews for further processing
     reviews = positive_reviews + negative_reviews
@@ -273,15 +297,20 @@ else:  # Random Mode
             time.sleep(2)
 
         total_scraped = len(all_reviews)
-        console.print(Panel(f"[bold green]Total reviews scraped:[/] {total_scraped}", title="Scraping Results"))
+        end_time = time.time()  # Record the end time
+        elapsed_time = end_time - start_time  # Calculate the time taken
+        console.print(Panel(f"[bold green]Total reviews scraped:[/] {total_scraped}\n[bold green]Scraping completed in:[/] {elapsed_time:.2f}s", title="Scraping Results"))
 
     except Exception as e:
         console.print(Panel(f"[bold red]Error during scraping: {e}[/]", title="Error"))
     finally:
         browser.quit()
-        console.print("[bold yellow]Browser closed.[/]")
 
     reviews = all_reviews
+
+# ---------------------------
+# Time Tracking for Scraping Process
+# ---------------------------
 
 # ---------------------------
 # Data Processing and Cleaning
@@ -317,13 +346,13 @@ df['Review'] = df['Review'].str.strip()
 # ---------------------------
 csv_filename = os.path.join(output_folder, 'reviews.csv')
 df.to_csv(csv_filename, encoding='utf-8', sep=';', index=False)
-console.print(Panel(f"[bold green]Cleaned CSV data saved to:[/] {csv_filename}", title="Data Saved"))
+console.print(Panel(f"[bold green]Cleaned CSV data saved to:[/] {csv_filename}", title="Created CSV"))
 
 json_filename = os.path.join(output_folder, 'reviews.json')
 data_as_records = df.to_dict(orient='records')
 with open(json_filename, 'w', encoding='utf-8') as json_file:
     json.dump(data_as_records, json_file, ensure_ascii=False, indent=4)
-console.print(Panel(f"[bold green]Cleaned JSON data saved to:[/] {json_filename}", title="Data Saved"))
+console.print(Panel(f"[bold green]Cleaned JSON data saved to:[/] {json_filename}", title="Created JSON"))
 
 # ---------------------------
 # Text Processing and Analysis
