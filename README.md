@@ -21,7 +21,9 @@ Ensure the following dependencies are installed:
 - questionary
 - rich
 
-> Download using pip: `pip install pandas nltk wordcloud plotly selenium questionary rich`
+> Download using pip:
+
+    pip install pandas nltk wordcloud plotly selenium questionary rich
 
 #### Note: if you are on Arch Linux, pip won't install libraries on your main system, you need to be in Python Virtual Environment (venv)
 
